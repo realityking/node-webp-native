@@ -35,6 +35,34 @@ test('sync: convert a WebP image "autoFilter" option', async t => {
   t.true(data.length < buf.length)
 })
 
+test('sync: convert a WebP image "method" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { method: 2 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "alphaMethod" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { alphaMethod: 0 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "filter" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { filter: 30 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "preset" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { preset: 'drawing' })
+
+  t.true(data.length < buf.length)
+})
+
 //test('sync: convert a WebP image "noAlpha" option', async t => {
   //@todo implement test
 //})

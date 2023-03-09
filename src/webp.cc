@@ -72,6 +72,42 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
     }
   }
 
+  if (options.Has("alphaQuality")) {
+    option_value = options.Get("alphaQuality");
+    if (!option_value.IsNumber()) {
+      return 7;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 100) {
+      return 8;
+    }
+    config.alpha_quality = num;
+  }
+
+  if (options.Has("alphaMethod")) {
+    option_value = options.Get("alphaMethod");
+    if (!option_value.IsNumber()) {
+      return 9;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 1) {
+      return 10;
+    }
+    config.alpha_compression = num;
+  }
+
+  if (options.Has("filter")) {
+    option_value = options.Get("filter");
+    if (!option_value.IsNumber()) {
+      return 11;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 100) {
+      return 12;
+    }
+    config.filter_strength = num;
+  }
+
   return 0;
 }
 
@@ -90,6 +126,18 @@ const char* parse_option_error_text(const unsigned code) {
       return "Value for option 'sns' must be between 0 and 100.";
     case 6:
       return "Wrong type for option 'autoFilter'.";
+    case 7:
+      return "Wrong type for option 'alphaQuality'.";
+    case 8:
+      return "Value for option 'alphaQuality' must be between 0 and 100.";
+    case 9:
+      return "Wrong type for option 'alphaMethod'.";
+    case 10:
+      return "Value for option 'alphaMethod' must be between 0 and 1.";
+    case 11:
+      return "Wrong type for option 'filter'.";
+    case 12:
+      return "Value for option 'filter' must be between 0 and 100.";
   }
   return "unknown error code";
 }
@@ -102,6 +150,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
   int error = 0;
   int ok = 0;
   int keep_alpha = 1;
+  int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
 
   Metadata metadata;
   WebPPicture picture;
@@ -125,10 +174,73 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
           Napi::TypeError::New(env, "options must be an object"));
     }
     Napi::Object options = info[1].ToObject();
-    error = parseOptions(options, config);
-    if (error) {
-      NAPI_THROW_EMPTY_BUFFER(
-          Napi::TypeError::New(env, parse_option_error_text(error)));
+
+    if (options.Has("quality")) {
+      option_value = options.Get("quality");
+      if (!option_value.IsNumber()) {
+        NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, "Wrong type for option 'quality'."));
+      }
+      int num = option_value.As<Napi::Number>().Int32Value(); // @todo should this be a float?
+      if (num < 0 || num > 100) {
+        Napi::Error::New(env, "Value for option 'quality' must be between 0 and 100.");
+      }
+
+      config.quality = num;
+      use_lossless_preset = 0;   // disable -z option
+    }
+
+    if (options.Has("preset")) {
+      option_value = options.Get("preset");
+      if (!option_value.IsNumber()) {
+        NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, "Wrong type for option 'preset'."));
+      }
+      int presetNum = option_value.As<Napi::Number>().Int32Value();
+      if (presetNum < 1 || presetNum > 6) {
+        Napi::Error::New(env, "Value for option 'preset' must be between 1 and 6.");
+      }
+
+      WebPPreset preset;
+
+      switch (presetNum) {
+        case 1:
+          preset = WEBP_PRESET_DEFAULT;
+          break;
+        case 2:
+          preset = WEBP_PRESET_PHOTO;
+          break;
+        case 3:
+          preset = WEBP_PRESET_PICTURE;
+          break;
+        case 4:
+          preset = WEBP_PRESET_DRAWING;
+          break;
+        case 5:
+          preset = WEBP_PRESET_ICON;
+          break;
+        case 6:
+          preset = WEBP_PRESET_TEXT;
+          break;
+      }
+      if (!WebPConfigPreset(&config, preset, config.quality)) {
+        Napi::Error::New(env, "Could not initialize configuration with preset.");
+      }
+    }
+
+    if (options.Has("method")) {
+      option_value = options.Get("method");
+      if (!option_value.IsNumber()) {
+        NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, "Wrong type for option 'method'."));
+      }
+      int num = option_value.As<Napi::Number>().Int32Value();
+      if (num < 0 || num > 6) {
+        Napi::Error::New(env, "Value for option 'method' must be between 0 and 6.");
+      }
+
+      config.method = num;
+      use_lossless_preset = 0;   // disable -z option
     }
 
     if (options.Has("noAlpha")) {
@@ -140,6 +252,12 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
       if (option_value.As<Napi::Boolean>().Value()) {
         keep_alpha = 0;
       }
+    }
+
+    error = parseOptions(options, config);
+    if (error) {
+      NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, parse_option_error_text(error)));
     }
   }
 
