@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "./libwebp/imageio/image_dec.h"
+#include "image_reader.h"
 #include "webp/encode.h"
 
 using namespace Napi;

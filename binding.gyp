@@ -3,12 +3,10 @@
     {
       'target_name': 'webp',
       'sources': [
-        'src/libwebp/imageio/image_dec.c',
         'src/libwebp/imageio/imageio_util.c',
         'src/libwebp/imageio/jpegdec.c',
         'src/libwebp/imageio/metadata.c',
         'src/libwebp/imageio/pngdec.c',
-        'src/libwebp/imageio/pnmdec.c',
         'src/libwebp/imageio/tiffdec.c',
         'src/libwebp/imageio/webpdec.c',
 
@@ -100,6 +98,7 @@
         'src/libwebp/src/utils/thread_utils.c',
         'src/libwebp/src/utils/utils.c',
 
+        'src/image_reader.cc',
         'src/webp.cc',
       ],
       'include_dirs': [
