@@ -8,7 +8,7 @@ export type Options = {
   filter?: number // @todo unimplemented
   noAlpha?: boolean // @todo unimplemented
   autoFilter?: boolean // @todo unimplemented
-  sharpness?: 0|1|2|3|4|5|6|7 // @todo unimplemented
+  sharpness?: 0|1|2|3|4|5|6|7
   lossless?: any // @todo unimplemented. Might split the definition
   nearLossless?: number // @todo unimplemented
   crop?: [number, number, number, number] // @todo unimplemented

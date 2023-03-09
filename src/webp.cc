@@ -29,10 +29,42 @@ static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
   "USER_ABORT: encoding abort requested by user"
 };
 
+int parseOptions(const Napi::Object& options, WebPConfig& config) {
+  Napi::Value option_value;
+
+  if (options.IsEmpty()) {
+    return 0;
+  }
+
+  if (options.Has("sharpness")) {
+    option_value = options.Get("sharpness");
+    if (!option_value.IsNumber()) {
+      return 2;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+
+    config.filter_sharpness = num;
+  }
+
+  return 0;
+}
+
+const char* parse_option_error_text(const unsigned code) {
+  switch (code) {
+    case 0:
+      return "no error, everything went ok";
+    // 1 is reserved for future use
+    case 2:
+      return "Wrong type for option 'sharpness'";
+  }
+  return "unknown error code";
+}
+
 Napi::Buffer<unsigned char> ConvertToWebpSync(
     const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
+  int error = 0;
   int ok = 0;
   int keep_alpha = 1;
 
@@ -58,8 +90,11 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
           Napi::TypeError::New(env, "options must be an object"));
     }
     Napi::Object options = info[1].ToObject();
-
-    // set config options
+    error = parseOptions(options, config);
+    if (error) {
+      NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, parse_option_error_text(error)));
+    }
   }
 
   if (!WebPValidateConfig(&config)) {
