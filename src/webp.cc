@@ -41,6 +41,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
   WebPConfig config;
   WebPMemoryWriter memory_writer;
 
+  // @todo: currently we don't ever free these
   MetadataInit(&metadata);
   WebPMemoryWriterInit(&memory_writer);
   WebPPictureInit(&picture);
