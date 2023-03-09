@@ -1,10 +1,9 @@
-#include "webp/types.h"
-
-#include "imageio/metadata.h"
 #include "imageio/jpegdec.h"
+#include "imageio/metadata.h"
 #include "imageio/pngdec.h"
 #include "imageio/tiffdec.h"
 #include "imageio/webpdec.h"
+#include "webp/types.h"
 
 extern "C" {
 
@@ -23,8 +22,8 @@ WebPInputFileFormat WebPGuessImageType(const uint8_t* const data,
 
 // Signature for common image-reading functions (ReadPNG, ReadJPEG, ...)
 typedef int (*WebPImageReader)(const uint8_t* const data, size_t data_size,
-                               struct WebPPicture* const pic,
-                               int keep_alpha, struct Metadata* const metadata);
+                               struct WebPPicture* const pic, int keep_alpha,
+                               struct Metadata* const metadata);
 
 // Return the reader associated to a given file format.
 WebPImageReader WebPGetImageReader(WebPInputFileFormat format);
