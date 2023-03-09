@@ -3,11 +3,12 @@ export type Options = {
   quality?: number // @todo unimplemented
   alphaQuality?: number  // @todo unimplemented
   method?: 0|1|2|3|4|5|6 // @todo unimplemented
+  alphaMethod?: 0|1 // @todo unimplemented
   size?: number // @todo unimplemented
-  sns?: number // @todo unimplemented
+  sns?: number
   filter?: number // @todo unimplemented
-  noAlpha?: boolean // @todo unimplemented
-  autoFilter?: boolean // @todo unimplemented
+  noAlpha?: boolean
+  autoFilter?: boolean
   sharpness?: 0|1|2|3|4|5|6|7
   lossless?: any // @todo unimplemented. Might split the definition
   nearLossless?: number // @todo unimplemented

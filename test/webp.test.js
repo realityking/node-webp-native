@@ -21,6 +21,24 @@ test('sync: convert a WebP image "sharpness" option', async t => {
   t.true(data.length < buf.length)
 })
 
+test('sync: convert a WebP image "sns" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { sns: 20 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "autoFilter" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { autoFilter: true })
+
+  t.true(data.length < buf.length)
+})
+
+//test('sync: convert a WebP image "noAlpha" option', async t => {
+  //@todo implement test
+//})
+
 test('sync: throws error if input is not a buffer', t => {
   t.throws(() => {
     convertToWebpSync('nope')

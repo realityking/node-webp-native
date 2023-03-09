@@ -42,8 +42,34 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
       return 2;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 7) {
+      return 3;
+    }
 
     config.filter_sharpness = num;
+  }
+
+  if (options.Has("sns")) {
+    option_value = options.Get("sns");
+    if (!option_value.IsNumber()) {
+      return 4;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 100) {
+      return 5;
+    }
+
+    config.sns_strength = num;
+  }
+
+  if (options.Has("autoFilter")) {
+    option_value = options.Get("autoFilter");
+    if (!option_value.IsBoolean()) {
+      return 6;
+    }
+    if (option_value.As<Napi::Boolean>().Value()) {
+      config.autofilter = 1;
+    }
   }
 
   return 0;
@@ -55,7 +81,15 @@ const char* parse_option_error_text(const unsigned code) {
       return "no error, everything went ok";
     // 1 is reserved for future use
     case 2:
-      return "Wrong type for option 'sharpness'";
+      return "Wrong type for option 'sharpness'.";
+    case 3:
+      return "Value for option 'sharpness' must be between 0 and 7.";
+    case 4:
+      return "Wrong type for option 'sns'.";
+    case 5:
+      return "Value for option 'sns' must be between 0 and 100.";
+    case 6:
+      return "Wrong type for option 'autoFilter'.";
   }
   return "unknown error code";
 }
@@ -63,6 +97,7 @@ const char* parse_option_error_text(const unsigned code) {
 Napi::Buffer<unsigned char> ConvertToWebpSync(
     const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
+  Napi::Value option_value;
 
   int error = 0;
   int ok = 0;
@@ -95,11 +130,22 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
       NAPI_THROW_EMPTY_BUFFER(
           Napi::TypeError::New(env, parse_option_error_text(error)));
     }
+
+    if (options.Has("noAlpha")) {
+      option_value = options.Get("noAlpha");
+      if (!option_value.IsBoolean()) {
+        NAPI_THROW_EMPTY_BUFFER(
+          Napi::TypeError::New(env, "Wrong type for option 'noAlpha'."));
+      }
+      if (option_value.As<Napi::Boolean>().Value()) {
+        keep_alpha = 0;
+      }
+    }
   }
 
   if (!WebPValidateConfig(&config)) {
     NAPI_THROW_EMPTY_BUFFER(
-        Napi::TypeError::New(env, "invalid webp configuration"));
+        Napi::Error::New(env, "invalid webp configuration"));
   }
 
   Napi::Buffer<unsigned char> inputBuffer =
