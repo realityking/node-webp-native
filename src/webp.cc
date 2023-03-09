@@ -29,7 +29,11 @@ static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
   "USER_ABORT: encoding abort requested by user"
 };
 
-int parseOptions(const Napi::Object& options, WebPConfig& config) {
+int parseOptions(
+  const Napi::Object& options,
+  WebPConfig& config,
+  Napi::Env env,
+  Napi::Error& error) {
   Napi::Value option_value;
 
   if (options.IsEmpty()) {
@@ -39,10 +43,12 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("sharpness")) {
     option_value = options.Get("sharpness");
     if (!option_value.IsNumber()) {
-      return 2;
+      error = Napi::TypeError::New(env,  "Wrong type for option 'sharpness'");
+      return 1;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
     if (num < 0 || num > 7) {
+      error = Napi::Error::New(env,  "Value for option 'sharpness' must be between 0 and 7.");
       return 3;
     }
 
@@ -52,10 +58,12 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("sns")) {
     option_value = options.Get("sns");
     if (!option_value.IsNumber()) {
-      return 4;
+      error = Napi::TypeError::New(env,  "Wrong type for option 'sns'");
+      return 1;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
     if (num < 0 || num > 100) {
+      error = Napi::Error::New(env,  "Value for option 'sns' must be between 0 and 100.");
       return 5;
     }
 
@@ -65,9 +73,11 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("autoFilter")) {
     option_value = options.Get("autoFilter");
     if (!option_value.IsBoolean()) {
+      error = Napi::TypeError::New(env,  "Wrong type for option 'autoFilter'");
       return 6;
     }
     if (option_value.As<Napi::Boolean>().Value()) {
+      error = Napi::Error::New(env,  "Value for option 'filter' must be between 0 and 100.");
       config.autofilter = 1;
     }
   }
@@ -75,10 +85,12 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("alphaQuality")) {
     option_value = options.Get("alphaQuality");
     if (!option_value.IsNumber()) {
-      return 7;
+      error = Napi::TypeError::New(env,  "Wrong type for option 'alphaQuality'");
+      return 1;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
     if (num < 0 || num > 100) {
+      error = Napi::Error::New(env,  "Value for option 'alphaQuality' must be between 0 and 100.");
       return 8;
     }
     config.alpha_quality = num;
@@ -87,10 +99,12 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("alphaMethod")) {
     option_value = options.Get("alphaMethod");
     if (!option_value.IsNumber()) {
-      return 9;
+      error = Napi::TypeError::New(env,  "Wrong type for option 'alphaMethod'");
+      return 1;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
     if (num < 0 || num > 1) {
+      error = Napi::Error::New(env,  "Value for option 'alphaMethod' must be between 0 and 1.");
       return 10;
     }
     config.alpha_compression = num;
@@ -99,11 +113,13 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   if (options.Has("filter")) {
     option_value = options.Get("filter");
     if (!option_value.IsNumber()) {
-      return 11;
+      error = Napi::TypeError::New(env,  "Wrong type for option 'filter'");
+      return 1;
     }
     int num = option_value.As<Napi::Number>().Int32Value();
     if (num < 0 || num > 100) {
-      return 12;
+      error = Napi::Error::New(env,  "Value for option 'filter' must be between 0 and 100.");
+      return 1;
     }
     config.filter_strength = num;
   }
@@ -111,41 +127,11 @@ int parseOptions(const Napi::Object& options, WebPConfig& config) {
   return 0;
 }
 
-const char* parse_option_error_text(const unsigned code) {
-  switch (code) {
-    case 0:
-      return "no error, everything went ok";
-    // 1 is reserved for future use
-    case 2:
-      return "Wrong type for option 'sharpness'.";
-    case 3:
-      return "Value for option 'sharpness' must be between 0 and 7.";
-    case 4:
-      return "Wrong type for option 'sns'.";
-    case 5:
-      return "Value for option 'sns' must be between 0 and 100.";
-    case 6:
-      return "Wrong type for option 'autoFilter'.";
-    case 7:
-      return "Wrong type for option 'alphaQuality'.";
-    case 8:
-      return "Value for option 'alphaQuality' must be between 0 and 100.";
-    case 9:
-      return "Wrong type for option 'alphaMethod'.";
-    case 10:
-      return "Value for option 'alphaMethod' must be between 0 and 1.";
-    case 11:
-      return "Wrong type for option 'filter'.";
-    case 12:
-      return "Value for option 'filter' must be between 0 and 100.";
-  }
-  return "unknown error code";
-}
-
 Napi::Buffer<unsigned char> ConvertToWebpSync(
     const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   Napi::Value option_value;
+  Napi::Error errorValue;
 
   int error = 0;
   int ok = 0;
@@ -254,10 +240,9 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(
       }
     }
 
-    error = parseOptions(options, config);
+    error = parseOptions(options, config, env, errorValue);
     if (error) {
-      NAPI_THROW_EMPTY_BUFFER(
-          Napi::TypeError::New(env, parse_option_error_text(error)));
+      NAPI_THROW_EMPTY_BUFFER(errorValue);
     }
   }
 

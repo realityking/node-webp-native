@@ -75,3 +75,26 @@ test('sync: throws error if input is not a buffer', t => {
     message: 'input must be a buffer'
   })
 })
+
+// @todo fix me
+/* test('sync: throws error if options is not an object', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  convertToWebpSync(buf, 'nope')
+
+  t.throws(() => {
+    convertToWebpSync(buf, 'nope')
+  }, {
+    instanceOf: TypeError,
+    message: 'options must be an object'
+  })
+}) */
+
+test('sync: throws error if option value has wrong type', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  t.throws(() => {
+    convertToWebpSync(buf, { sharpness: 'a lot' })
+  }, {
+    instanceOf: TypeError,
+    message: 'Wrong type for option \'sharpness\''
+  })
+})
