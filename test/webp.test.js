@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs/promises')
+const sharp = require('sharp')
 const path = require('path')
 
 const test = require('ava')
@@ -105,9 +106,20 @@ test('sync: convert a WebP image "nearLossless" option', async t => {
   t.false(data.length < buf.length)
 })
 
-//test('sync: convert a WebP image "noAlpha" option', async t => {
-  //@todo implement test
-//})
+test('sync: convert a WebP image "noAlpha" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/3_webp_a.webp'))
+  const originalImage = sharp(buf)
+  const originalMetadata = await originalImage.metadata()
+
+  // Make sure we test with an image that has alpha transparency
+  t.true(originalMetadata.hasAlpha)
+
+  const data = convertToWebpSync(buf, { noAlpha: true })
+  const convertedImage = sharp(data)
+  const convertedMetadata = await convertedImage.metadata()
+
+  t.false(convertedMetadata.hasAlpha)
+})
 
 test('sync: throws error if input is not a buffer', t => {
   t.throws(() => {
