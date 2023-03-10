@@ -99,6 +99,7 @@
         'src/libwebp/src/utils/utils.c',
 
         'src/image_reader.cc',
+        'src/image_writer.cc',
         'src/webp.cc',
       ],
       'include_dirs': [

@@ -3,19 +3,23 @@
 #include <sstream>
 
 #include "image_reader.h"
+#include "image_writer.h"
 #include "webp/encode.h"
+#include "webp/mux.h"
 
 using namespace Napi;
 
 #define NAPI_THROW_EMPTY_BUFFER(e) \
   NAPI_THROW(e, Napi::Buffer<unsigned char>::New(info.Env(), 0))
 
-enum {
-  METADATA_EXIF = (1 << 0),
-  METADATA_ICC = (1 << 1),
-  METADATA_XMP = (1 << 2),
-  METADATA_ALL = METADATA_EXIF | METADATA_ICC | METADATA_XMP
-};
+static const char* const kMuxErrorMessages[-WEBP_MUX_NOT_ENOUGH_DATA + 1] = {
+    "WEBP_MUX_NOT_FOUND", "WEBP_MUX_INVALID_ARGUMENT", "WEBP_MUX_BAD_DATA",
+    "WEBP_MUX_MEMORY_ERROR", "WEBP_MUX_NOT_ENOUGH_DATA"};
+
+static const char* MuxErrorString(WebPMuxError err) {
+  assert(err <= WEBP_MUX_NOT_FOUND && err >= WEBP_MUX_NOT_ENOUGH_DATA);
+  return kMuxErrorMessages[-err];
+}
 
 static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
     "OK",
@@ -426,8 +430,8 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
 
   WebPImageReader reader =
       WebPGuessImageReader(inputBufferData, inputBufferSize);
-  ok =
-      reader(inputBufferData, inputBufferSize, &picture, keep_alpha, (keep_metadata == 0) ? NULL : &metadata);
+  ok = reader(inputBufferData, inputBufferSize, &picture, keep_alpha,
+              (keep_metadata == 0) ? NULL : &metadata);
   if (!ok) {
     NAPI_THROW_EMPTY_BUFFER(
         Napi::Error::New(env, "could not read buffer as an image."));
@@ -444,11 +448,23 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
     NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env, errstr.str()));
   }
 
-  return Napi::Buffer<unsigned char>::Copy(
-      info.Env(), reinterpret_cast<unsigned char*>(memory_writer.mem),
-      memory_writer.size);
+  const WebPData input_data = {memory_writer.mem, memory_writer.size};
+  WebPData output_data;
+  WebPMuxError muxError = WEBP_MUX_OK;
+  Napi::Buffer<unsigned char> output_buffer;
+  muxError = create_output_buffer(&output_data, &input_data, &metadata,
+                                  keep_metadata);
+  if (muxError != WEBP_MUX_OK) {
+    NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env, "Could not mux webp"));
+  }
 
-  return Napi::Buffer<unsigned char>::New(info.Env(), 0);
+  // @todo consider implement NewOrCopy to avoid copying the image so often
+  output_buffer = Napi::Buffer<unsigned char>::Copy(
+      env, reinterpret_cast<const unsigned char*>(output_data.bytes),
+      output_data.size);
+  WebPDataClear(&output_data);
+
+  return output_buffer;
 }
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {

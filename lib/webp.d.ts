@@ -16,9 +16,9 @@ export type Options = {
   lossless?: any
   nearLossless?: number
   pass: any
-  metadata?: 'none'|'all'|MetadataOptions|MetadataOptions[] // @todo unimplemented. Need to define how this is passed
+  metadata?: 'none'|'all'|MetadataOptions|MetadataOptions[]
 }
 
-export function createWebpSync(input: Buffer, options?: Options) : Buffer;
+export function convertToWebpSync(input: Buffer, options?: Options) : Buffer;
 
-export function createWebp(input: Buffer, options?: Options) : Promise<Buffer>;
+export function convertToWebp(input: Buffer, options?: Options) : Promise<Buffer>;

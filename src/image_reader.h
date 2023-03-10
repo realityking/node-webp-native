@@ -5,8 +5,6 @@
 #include "imageio/webpdec.h"
 #include "webp/types.h"
 
-extern "C" {
-
 typedef enum {
   WEBP_PNG_FORMAT = 0,
   WEBP_JPEG_FORMAT,
@@ -33,4 +31,3 @@ WebPImageReader WebPGetImageReader(WebPInputFileFormat format);
 // unknown formats will return an always-failing valid reader.
 WebPImageReader WebPGuessImageReader(const uint8_t* const data,
                                      size_t data_size);
-}

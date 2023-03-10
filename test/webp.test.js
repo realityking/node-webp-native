@@ -133,8 +133,7 @@ test('sync: keep exif metadata when preserving all metadata', async t => {
   const convertedImage = sharp(data)
   const convertedMetadata = await convertedImage.metadata()
 
-  // @todo uncomment when functionality is implemented
-  // t.true(Buffer.isBuffer(convertedMetadata.exif))
+  t.true(Buffer.isBuffer(convertedMetadata.exif))
 })
 
 test('sync: keep exif metadata when preserving only exif', async t => {
@@ -149,8 +148,7 @@ test('sync: keep exif metadata when preserving only exif', async t => {
   const convertedImage = sharp(data)
   const convertedMetadata = await convertedImage.metadata()
 
-  // @todo uncomment when functionality is implemented
-  // t.true(Buffer.isBuffer(convertedMetadata.exif))
+  t.true(Buffer.isBuffer(convertedMetadata.exif))
 })
 
 test('sync: convert a WebP image "noAlpha" option', async t => {
