@@ -63,6 +63,34 @@ test('sync: convert a WebP image "preset" option', async t => {
   t.true(data.length < buf.length)
 })
 
+test('sync: convert a WebP image "size" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { size: 5000 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "pass" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { pass: 4 })
+
+  t.true(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "lossless" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { lossless: true })
+
+  t.false(data.length < buf.length)
+})
+
+test('sync: convert a WebP image "nearLossless" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { nearLossless: 1 })
+
+  t.false(data.length < buf.length)
+})
+
 //test('sync: convert a WebP image "noAlpha" option', async t => {
   //@todo implement test
 //})

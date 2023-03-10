@@ -75,10 +75,35 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
       return 6;
     }
     if (option_value.As<Napi::Boolean>().Value()) {
-      error = Napi::Error::New(
-          env, "Value for option 'filter' must be between 0 and 100.");
       config.autofilter = 1;
     }
+  }
+
+  if (options.Has("lossless")) {
+    option_value = options.Get("lossless");
+    if (!option_value.IsBoolean()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'lossless'");
+      return 6;
+    }
+    if (option_value.As<Napi::Boolean>().Value()) {
+      config.lossless = 1;
+    }
+  }
+
+  if (options.Has("nearLossless")) {
+    option_value = options.Get("nearLossless");
+    if (!option_value.IsNumber()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'nearLossless'");
+      return 1;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 100) {
+      error = Napi::Error::New(
+          env, "Value for option 'nearLossless' must be between 0 and 100.");
+      return 8;
+    }
+    config.near_lossless = num;
+    config.lossless = 1;  // use near-lossless only with lossless
   }
 
   if (options.Has("alphaQuality")) {
@@ -126,6 +151,37 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     config.filter_strength = num;
   }
 
+  if (options.Has("pass")) {
+    option_value = options.Get("pass");
+    if (!option_value.IsNumber()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'pass'");
+      return 1;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 6) {
+      error = Napi::Error::New(
+          env, "Value for option 'pass' must be between 0 and 10.");
+      return 1;
+    }
+
+    config.pass = num;
+  }
+
+  if (options.Has("size")) {
+    option_value = options.Get("size");
+    if (!option_value.IsNumber()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'size'");
+      return 1;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0) {
+      error = Napi::Error::New(
+          env, "Value for option 'size' must be larger than 0.");
+      return 1;
+    }
+    config.target_size = num;
+  }
+
   return 0;
 }
 
@@ -137,6 +193,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   int error = 0;
   int ok = 0;
   int keep_alpha = 1;
+  int lossless_preset = 6;
   int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
 
   Metadata metadata;
@@ -235,6 +292,22 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
       use_lossless_preset = 0;  // disable -z option
     }
 
+    if (options.Has("losslessPreset")) {
+      option_value = options.Get("losslessPreset");
+      if (!option_value.IsNumber()) {
+        NAPI_THROW_EMPTY_BUFFER(Napi::TypeError::New(
+            env, "Wrong type for option 'losslessPreset'."));
+      }
+      int num = option_value.As<Napi::Number>().Int32Value();
+      if (num < 0 || num > 9) {
+        Napi::Error::New(
+            env, "Value for option 'losslessPreset' must be between 0 and 9.");
+      }
+
+      lossless_preset = num;
+      if (use_lossless_preset != 0) use_lossless_preset = 1;
+    }
+
     if (options.Has("noAlpha")) {
       option_value = options.Get("noAlpha");
       if (!option_value.IsBoolean()) {
@@ -250,6 +323,12 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
     if (error) {
       NAPI_THROW_EMPTY_BUFFER(errorValue);
     }
+  }
+
+  // If a target size was given, but somehow the pass option was
+  // omitted, force a reasonable value.
+  if (config.target_size > 0) {
+    if (config.pass == 1) config.pass = 6;
   }
 
   if (!WebPValidateConfig(&config)) {
