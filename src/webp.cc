@@ -427,7 +427,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   WebPImageReader reader =
       WebPGuessImageReader(inputBufferData, inputBufferSize);
   ok =
-      reader(inputBufferData, inputBufferSize, &picture, keep_alpha, (keep_metadata == 0) ? NULL : &metadata));
+      reader(inputBufferData, inputBufferSize, &picture, keep_alpha, (keep_metadata == 0) ? NULL : &metadata);
   if (!ok) {
     NAPI_THROW_EMPTY_BUFFER(
         Napi::Error::New(env, "could not read buffer as an image."));
