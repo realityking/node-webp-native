@@ -136,13 +136,13 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
       error = Napi::TypeError::New(env, "Wrong type for option 'hint'");
       return 1;
     }
-    std::string presetName = option_value.As<Napi::String>();
+    std::string hintName = option_value.As<Napi::String>();
 
-    if (presetName.compare("photo") == 0) {
+    if (hintName.compare("photo") == 0) {
       config.image_hint = WEBP_HINT_PHOTO;
-    } else if (presetName.compare("picture") == 0) {
+    } else if (hintName.compare("picture") == 0) {
       config.image_hint = WEBP_HINT_PICTURE;
-    } else if (presetName.compare("graph") == 0) {
+    } else if (hintName.compare("graph") == 0) {
       config.image_hint = WEBP_HINT_GRAPH;
     } else {
       error = Napi::Error::New(
@@ -382,7 +382,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
             NAPI_THROW_EMPTY_BUFFER(
                 Napi::TypeError::New(env, "Wrong type for option 'metadata'."));
           }
-          const std::string metadataOption = option_value.As<Napi::String>();
+          const std::string metadataOption = val.As<Napi::String>();
           if (metadataOption.compare("exif") == 0) {
             keep_metadata |= METADATA_EXIF;
           } else if (metadataOption.compare("icc") == 0) {

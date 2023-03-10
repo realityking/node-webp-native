@@ -106,6 +106,53 @@ test('sync: convert a WebP image "nearLossless" option', async t => {
   t.false(data.length < buf.length)
 })
 
+test('sync: strip exif metadata by default', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/exif.webp'))
+  const originalImage = sharp(buf)
+  const originalMetadata = await originalImage.metadata()
+
+  // Make sure the source image actually has exif data
+  t.true(Buffer.isBuffer(originalMetadata.exif))
+
+  const data = convertToWebpSync(buf)
+  const convertedImage = sharp(data)
+  const convertedMetadata = await convertedImage.metadata()
+
+  t.is(convertedMetadata.exif, undefined)
+})
+
+test('sync: keep exif metadata when preserving all metadata', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/exif.webp'))
+  const originalImage = sharp(buf)
+  const originalMetadata = await originalImage.metadata()
+
+  // Make sure the source image actually has exif data
+  t.true(Buffer.isBuffer(originalMetadata.exif))
+
+  const data = convertToWebpSync(buf, { metadata: 'all' })
+  const convertedImage = sharp(data)
+  const convertedMetadata = await convertedImage.metadata()
+
+  // @todo uncomment when functionality is implemented
+  // t.true(Buffer.isBuffer(convertedMetadata.exif))
+})
+
+test('sync: keep exif metadata when preserving only exif', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/exif.webp'))
+  const originalImage = sharp(buf)
+  const originalMetadata = await originalImage.metadata()
+
+  // Make sure the source image actually has exif data
+  t.true(Buffer.isBuffer(originalMetadata.exif))
+
+  const data = convertToWebpSync(buf, { metadata: ['exif'] })
+  const convertedImage = sharp(data)
+  const convertedMetadata = await convertedImage.metadata()
+
+  // @todo uncomment when functionality is implemented
+  // t.true(Buffer.isBuffer(convertedMetadata.exif))
+})
+
 test('sync: convert a WebP image "noAlpha" option', async t => {
   const buf = await fs.readFile(path.join(__dirname, 'fixtures/3_webp_a.webp'))
   const originalImage = sharp(buf)
