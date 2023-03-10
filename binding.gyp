@@ -8,7 +8,6 @@
         'src/libwebp/imageio/metadata.c',
         'src/libwebp/imageio/pngdec.c',
         'src/libwebp/imageio/tiffdec.c',
-        'src/libwebp/imageio/webpdec.c',
 
         'src/libwebp/sharpyuv/sharpyuv.c',
         'src/libwebp/sharpyuv/sharpyuv_cpu.c',
@@ -98,6 +97,7 @@
         'src/libwebp/src/utils/thread_utils.c',
         'src/libwebp/src/utils/utils.c',
 
+        'src/image_reader_webp.cc',
         'src/image_reader.cc',
         'src/image_writer.cc',
         'src/webp.cc',

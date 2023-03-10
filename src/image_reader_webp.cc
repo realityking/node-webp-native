@@ -1,19 +1,4 @@
-// Copyright 2014 Google Inc. All Rights Reserved.
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the COPYING file in the root of the source
-// tree. An additional intellectual property rights grant can be found
-// in the file PATENTS. All contributing project authors may
-// be found in the AUTHORS file in the root of the source tree.
-// -----------------------------------------------------------------------------
-//
-// WebP decode.
-
-#ifdef HAVE_CONFIG_H
-#include "webp/config.h"
-#endif
-
-#include "./webpdec.h"
+#include "./image_reader_webp.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -22,9 +7,9 @@
 #include "webp/decode.h"
 #include "webp/demux.h"
 #include "webp/encode.h"
-#include "../examples/unicode.h"
-#include "./imageio_util.h"
-#include "./metadata.h"
+#include "libwebp/examples/unicode.h"
+#include "imageio/imageio_util.h"
+#include "imageio/metadata.h"
 
 //------------------------------------------------------------------------------
 // WebP decoding
@@ -52,28 +37,6 @@ void PrintWebPError(const char* const in_file, int status) {
   fprintf(stderr, "\n");
 }
 
-int LoadWebP(const char* const in_file,
-             const uint8_t** data, size_t* data_size,
-             WebPBitstreamFeatures* bitstream) {
-  VP8StatusCode status;
-  WebPBitstreamFeatures local_features;
-  if (!ImgIoUtilReadFile(in_file, data, data_size)) return 0;
-
-  if (bitstream == NULL) {
-    bitstream = &local_features;
-  }
-
-  status = WebPGetFeatures(*data, *data_size, bitstream);
-  if (status != VP8_STATUS_OK) {
-    WebPFree((void*)*data);
-    *data = NULL;
-    *data_size = 0;
-    PrintWebPError(in_file, status);
-    return 0;
-  }
-  return 1;
-}
-
 //------------------------------------------------------------------------------
 
 VP8StatusCode DecodeWebP(const uint8_t* const data, size_t data_size,
@@ -95,7 +58,6 @@ VP8StatusCode DecodeWebPIncremental(
   {
     WebPIDecoder* const idec = WebPIDecode(data, data_size, config);
     if (idec == NULL) {
-      fprintf(stderr, "Failed during WebPIDecode().\n");
       return VP8_STATUS_OUT_OF_MEMORY;
     } else {
       status = WebPIUpdate(idec, data, data_size);
@@ -153,7 +115,6 @@ int ReadWebP(const uint8_t* const data, size_t data_size,
   if (data == NULL || data_size == 0 || pic == NULL) return 0;
 
   if (!WebPInitDecoderConfig(&config)) {
-    fprintf(stderr, "Library version mismatch!\n");
     return 0;
   }
 
@@ -241,5 +202,3 @@ int ReadWebP(const uint8_t* const data, size_t data_size,
   if (!ok) WebPPictureFree(pic);
   return ok;
 }
-
-// -----------------------------------------------------------------------------

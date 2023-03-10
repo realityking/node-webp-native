@@ -2,7 +2,7 @@
 #include "imageio/metadata.h"
 #include "imageio/pngdec.h"
 #include "imageio/tiffdec.h"
-#include "imageio/webpdec.h"
+#include "image_reader_webp.h"
 #include "webp/types.h"
 
 typedef enum {

@@ -1,22 +1,7 @@
-// Copyright 2014 Google Inc. All Rights Reserved.
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the COPYING file in the root of the source
-// tree. An additional intellectual property rights grant can be found
-// in the file PATENTS. All contributing project authors may
-// be found in the AUTHORS file in the root of the source tree.
-// -----------------------------------------------------------------------------
-//
-// WebP decode.
-
-#ifndef WEBP_IMAGEIO_WEBPDEC_H_
-#define WEBP_IMAGEIO_WEBPDEC_H_
+#ifndef WEBP_READER_WEBP_H_
+#define WEBP_READER_WEBP_H_
 
 #include "webp/decode.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct Metadata;
 struct WebPPicture;
@@ -28,13 +13,6 @@ struct WebPPicture;
 // 'status' is treated as a VP8StatusCode and if valid will be printed as a
 // text string.
 void PrintWebPError(const char* const in_file, int status);
-
-// Reads a WebP from 'in_file', returning the contents and size in 'data' and
-// 'data_size'. If not NULL, 'bitstream' is populated using WebPGetFeatures().
-// Returns true on success.
-int LoadWebP(const char* const in_file,
-             const uint8_t** data, size_t* data_size,
-             WebPBitstreamFeatures* bitstream);
 
 // Decodes the WebP contained in 'data'.
 // 'config' is a structure previously initialized by WebPInitDecoderConfig().
@@ -60,8 +38,4 @@ int ReadWebP(const uint8_t* const data, size_t data_size,
              struct WebPPicture* const pic,
              int keep_alpha, struct Metadata* const metadata);
 
-#ifdef __cplusplus
-}    // extern "C"
-#endif
-
-#endif  // WEBP_IMAGEIO_WEBPDEC_H_
+#endif  // WEBP_READER_WEBP_H_
