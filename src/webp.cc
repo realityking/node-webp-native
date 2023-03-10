@@ -238,41 +238,33 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
 
     if (options.Has("preset")) {
       option_value = options.Get("preset");
-      if (!option_value.IsNumber()) {
+      if (!option_value.IsString()) {
         NAPI_THROW_EMPTY_BUFFER(
             Napi::TypeError::New(env, "Wrong type for option 'preset'."));
       }
-      int presetNum = option_value.As<Napi::Number>().Int32Value();
-      if (presetNum < 1 || presetNum > 6) {
-        Napi::Error::New(env,
-                         "Value for option 'preset' must be between 1 and 6.");
-      }
-
+      std::string presetName = option_value.As<Napi::String>();
       WebPPreset preset;
 
-      switch (presetNum) {
-        case 1:
-          preset = WEBP_PRESET_DEFAULT;
-          break;
-        case 2:
-          preset = WEBP_PRESET_PHOTO;
-          break;
-        case 3:
-          preset = WEBP_PRESET_PICTURE;
-          break;
-        case 4:
-          preset = WEBP_PRESET_DRAWING;
-          break;
-        case 5:
-          preset = WEBP_PRESET_ICON;
-          break;
-        case 6:
-          preset = WEBP_PRESET_TEXT;
-          break;
+      if (presetName.compare("default") == 0) {
+        preset = WEBP_PRESET_DEFAULT;
+      } else if (presetName.compare("photo") == 0) {
+        preset = WEBP_PRESET_PHOTO;
+      } else if (presetName.compare("picture") == 0) {
+        preset = WEBP_PRESET_PICTURE;
+      } else if (presetName.compare("drawing") == 0) {
+        preset = WEBP_PRESET_DRAWING;
+      } else if (presetName.compare("icon") == 0) {
+        preset = WEBP_PRESET_ICON;
+      } else if (presetName.compare("text") == 0) {
+        preset = WEBP_PRESET_TEXT;
+      } else {
+         NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env,
+                         "Value for option 'preset' must be between 1 and 6."));
       }
+
       if (!WebPConfigPreset(&config, preset, config.quality)) {
-        Napi::Error::New(env,
-                         "Could not initialize configuration with preset.");
+        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env,
+                         "Could not initialize configuration with preset."));
       }
     }
 
