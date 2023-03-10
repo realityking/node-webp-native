@@ -325,6 +325,12 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
     }
   }
 
+  if (use_lossless_preset == 1) {
+    if (!WebPConfigLosslessPreset(&config, lossless_preset)) {
+      NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env, "invalid lossless preset"));
+    }
+  }
+
   // If a target size was given, but somehow the pass option was
   // omitted, force a reasonable value.
   if (config.target_size > 0) {
@@ -352,9 +358,6 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
 
   picture.writer = WebPMemoryWrite;
   picture.custom_ptr = (void*)&memory_writer;
-
-  // crop - WebPPictureView
-  // resize
 
   if (!WebPEncode(&config, &picture)) {
     std::ostringstream errstr;

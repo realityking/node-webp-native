@@ -84,6 +84,13 @@ test('sync: convert a WebP image "lossless" option', async t => {
   t.false(data.length < buf.length)
 })
 
+test('sync: convert a WebP image "losslessPreset" option', async t => {
+  const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
+  const data = convertToWebpSync(buf, { losslessPreset: 2 })
+
+  t.false(data.length < buf.length)
+})
+
 test('sync: convert a WebP image "nearLossless" option', async t => {
   const buf = await fs.readFile(path.join(__dirname, 'fixtures/1.webp'))
   const data = convertToWebpSync(buf, { nearLossless: 1 })
