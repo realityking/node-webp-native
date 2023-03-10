@@ -1,3 +1,4 @@
+type MetadataOptions = 'exif'|'icc'|'xmp';
 export type Options = {
   preset?: 'default'|'photo'|'picture'|'drawing'|'icon'|'text'
   hint?: 'photo'|'picture'|'graph'
@@ -15,7 +16,7 @@ export type Options = {
   lossless?: any
   nearLossless?: number
   pass: any
-  metadata?: any // @todo unimplemented. Need to define how this is passed
+  metadata?: 'none'|'all'|MetadataOptions|MetadataOptions[] // @todo unimplemented. Need to define how this is passed
 }
 
 export function createWebpSync(input: Buffer, options?: Options) : Buffer;

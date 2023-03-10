@@ -10,6 +10,13 @@ using namespace Napi;
 #define NAPI_THROW_EMPTY_BUFFER(e) \
   NAPI_THROW(e, Napi::Buffer<unsigned char>::New(info.Env(), 0))
 
+enum {
+  METADATA_EXIF = (1 << 0),
+  METADATA_ICC = (1 << 1),
+  METADATA_XMP = (1 << 2),
+  METADATA_ALL = METADATA_EXIF | METADATA_ICC | METADATA_XMP
+};
+
 static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
     "OK",
     "OUT_OF_MEMORY: Out of memory allocating objects",
@@ -315,6 +322,7 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   int error = 0;
   int ok = 0;
   int keep_alpha = 1;
+  int keep_metadata = 0;
 
   Metadata metadata;
   WebPPicture picture;
@@ -347,6 +355,50 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
       }
       if (option_value.As<Napi::Boolean>().Value()) {
         keep_alpha = 0;
+      }
+    }
+
+    if (options.Has("metadata")) {
+      option_value = options.Get("metadata");
+      if (option_value.IsString()) {
+        const std::string metadataOption = option_value.As<Napi::String>();
+
+        if (metadataOption.compare("none") == 0) {
+          keep_metadata = 0;
+        } else if (metadataOption.compare("all") == 0) {
+          keep_metadata = METADATA_ALL;
+        } else {
+          NAPI_THROW_EMPTY_BUFFER(
+              Napi::Error::New(env,
+                               "Value for option 'metadata' must be 'none', "
+                               "'all', or an array of metadata types."));
+        }
+      } else if (option_value.IsArray()) {
+        const Napi::Array inputArray = option_value.As<Napi::Array>();
+        const uint32_t length = inputArray.Length();
+        for (uint32_t i = 0; i < length; ++i) {
+          const Napi::Value val = inputArray[i];
+          if (!val.IsString()) {
+            NAPI_THROW_EMPTY_BUFFER(
+                Napi::TypeError::New(env, "Wrong type for option 'metadata'."));
+          }
+          const std::string metadataOption = option_value.As<Napi::String>();
+          if (metadataOption.compare("exif") == 0) {
+            keep_metadata |= METADATA_EXIF;
+          } else if (metadataOption.compare("icc") == 0) {
+            keep_metadata |= METADATA_ICC;
+          } else if (metadataOption.compare("xmp") == 0) {
+            keep_metadata |= METADATA_XMP;
+          } else {
+            NAPI_THROW_EMPTY_BUFFER(
+                Napi::Error::New(env,
+                                 "Value for option 'metadata' must be 'none', "
+                                 "'all', or an array of metadata types."));
+          }
+        }
+      } else {
+        NAPI_THROW_EMPTY_BUFFER(
+            Napi::TypeError::New(env, "Wrong type for option 'metadata'."));
       }
     }
 

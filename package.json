@@ -22,6 +22,7 @@
     "prebuild": "prebuildify --napi --tag-libc --tag-armv --strip",
     "lint": "eslint --ext=.js,.mjs .",
     "test:esm": "ava --config ava.config.esm.js",
+    "test:types": "tsd",
     "test": "ava && tsd"
   },
   "license": "(MIT AND BSD-3-Clause)",
