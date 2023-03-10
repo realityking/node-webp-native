@@ -421,13 +421,13 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   // Read the input. We need to decide if we prefer ARGB or YUVA
   // samples, depending on the expected compression mode (this saves
   // some conversion steps).
-  picture.use_argb = (config.lossless || config.use_sharp_yuv ||
-                      config.preprocessing > 0);
+  picture.use_argb =
+      (config.lossless || config.use_sharp_yuv || config.preprocessing > 0);
 
   WebPImageReader reader =
       WebPGuessImageReader(inputBufferData, inputBufferSize);
   ok =
-      reader(inputBufferData, inputBufferSize, &picture, keep_alpha, &metadata);
+      reader(inputBufferData, inputBufferSize, &picture, keep_alpha, (keep_metadata == 0) ? NULL : &metadata));
   if (!ok) {
     NAPI_THROW_EMPTY_BUFFER(
         Napi::Error::New(env, "could not read buffer as an image."));
