@@ -1,6 +1,6 @@
 export type Options = {
   preset?: 'default'|'photo'|'picture'|'drawing'|'icon'|'text'
-  hint?: 'photo'|'picture'|'graph' // @todo unimplemented
+  hint?: 'photo'|'picture'|'graph'
   quality?: number
   alphaQuality?: number
   method?: 0|1|2|3|4|5|6

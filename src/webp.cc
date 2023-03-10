@@ -36,6 +36,28 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     return 0;
   }
 
+  if (options.Has("hint")) {
+    option_value = options.Get("hint");
+    if (!option_value.IsString()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'hint'");
+      return 1;
+    }
+    std::string presetName = option_value.As<Napi::String>();
+
+    if (presetName.compare("photo") == 0) {
+      config.image_hint = WEBP_HINT_PHOTO;
+    } else if (presetName.compare("picture") == 0) {
+      config.image_hint = WEBP_HINT_PICTURE;
+    } else if (presetName.compare("graph") == 0) {
+      config.image_hint = WEBP_HINT_GRAPH;
+    } else {
+      error = Napi::Error::New(
+          env,
+          "Value for option 'hint' must be 'photo', 'picture', or 'graph'.");
+      return 1;
+    }
+  }
+
   if (options.Has("sharpness")) {
     option_value = options.Get("sharpness");
     if (!option_value.IsNumber()) {
@@ -46,7 +68,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     if (num < 0 || num > 7) {
       error = Napi::Error::New(
           env, "Value for option 'sharpness' must be between 0 and 7.");
-      return 3;
+      return 1;
     }
 
     config.filter_sharpness = num;
@@ -62,7 +84,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     if (num < 0 || num > 100) {
       error = Napi::Error::New(
           env, "Value for option 'sns' must be between 0 and 100.");
-      return 5;
+      return 1;
     }
 
     config.sns_strength = num;
@@ -72,7 +94,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     option_value = options.Get("autoFilter");
     if (!option_value.IsBoolean()) {
       error = Napi::TypeError::New(env, "Wrong type for option 'autoFilter'");
-      return 6;
+      return 1;
     }
     if (option_value.As<Napi::Boolean>().Value()) {
       config.autofilter = 1;
@@ -83,7 +105,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     option_value = options.Get("lossless");
     if (!option_value.IsBoolean()) {
       error = Napi::TypeError::New(env, "Wrong type for option 'lossless'");
-      return 6;
+      return 1;
     }
     if (option_value.As<Napi::Boolean>().Value()) {
       config.lossless = 1;
@@ -100,7 +122,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     if (num < 0 || num > 100) {
       error = Napi::Error::New(
           env, "Value for option 'nearLossless' must be between 0 and 100.");
-      return 8;
+      return 1;
     }
     config.near_lossless = num;
     config.lossless = 1;  // use near-lossless only with lossless
@@ -116,7 +138,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     if (num < 0 || num > 100) {
       error = Napi::Error::New(
           env, "Value for option 'alphaQuality' must be between 0 and 100.");
-      return 8;
+      return 1;
     }
     config.alpha_quality = num;
   }
@@ -131,7 +153,7 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     if (num < 0 || num > 1) {
       error = Napi::Error::New(
           env, "Value for option 'alphaMethod' must be between 0 and 1.");
-      return 10;
+      return 1;
     }
     config.alpha_compression = num;
   }
@@ -258,13 +280,13 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
       } else if (presetName.compare("text") == 0) {
         preset = WEBP_PRESET_TEXT;
       } else {
-         NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env,
-                         "Value for option 'preset' must be between 1 and 6."));
+        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(
+            env, "Value for option 'preset' must be a valid preset."));
       }
 
       if (!WebPConfigPreset(&config, preset, config.quality)) {
-        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env,
-                         "Could not initialize configuration with preset."));
+        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(
+            env, "Could not initialize configuration with preset."));
       }
     }
 
