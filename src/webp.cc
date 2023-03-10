@@ -418,6 +418,12 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   size_t inputBufferSize = inputBuffer.Length();
   const unsigned char* inputBufferData = inputBuffer.Data();
 
+  // Read the input. We need to decide if we prefer ARGB or YUVA
+  // samples, depending on the expected compression mode (this saves
+  // some conversion steps).
+  picture.use_argb = (config.lossless || config.use_sharp_yuv ||
+                      config.preprocessing > 0);
+
   WebPImageReader reader =
       WebPGuessImageReader(inputBufferData, inputBufferSize);
   ok =
