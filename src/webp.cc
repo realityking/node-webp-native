@@ -31,9 +31,96 @@ static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
 int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
                  Napi::Error& error) {
   Napi::Value option_value;
+  int lossless_preset = 6;
+  int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
 
   if (options.IsEmpty()) {
     return 0;
+  }
+
+  if (options.Has("quality")) {
+    option_value = options.Get("quality");
+    if (!option_value.IsNumber()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'quality'.");
+      return 1;
+    }
+    int num = option_value.As<Napi::Number>()
+                  .Int32Value();  // @todo should this be a float?
+    if (num < 0 || num > 100) {
+      error = Napi::Error::New(
+          env, "Value for option 'quality' must be between 0 and 100.");
+      return 1;
+    }
+
+    config.quality = num;
+    use_lossless_preset = 0;  // disable -z option
+  }
+
+  if (options.Has("preset")) {
+    option_value = options.Get("preset");
+    if (!option_value.IsString()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'preset'.");
+      return 1;
+    }
+    std::string presetName = option_value.As<Napi::String>();
+    WebPPreset preset;
+
+    if (presetName.compare("default") == 0) {
+      preset = WEBP_PRESET_DEFAULT;
+    } else if (presetName.compare("photo") == 0) {
+      preset = WEBP_PRESET_PHOTO;
+    } else if (presetName.compare("picture") == 0) {
+      preset = WEBP_PRESET_PICTURE;
+    } else if (presetName.compare("drawing") == 0) {
+      preset = WEBP_PRESET_DRAWING;
+    } else if (presetName.compare("icon") == 0) {
+      preset = WEBP_PRESET_ICON;
+    } else if (presetName.compare("text") == 0) {
+      preset = WEBP_PRESET_TEXT;
+    } else {
+      error = Napi::Error::New(
+          env, "Value for option 'preset' must be a valid preset.");
+      return 1;
+    }
+
+    if (!WebPConfigPreset(&config, preset, config.quality)) {
+      error = Napi::Error::New(
+          env, "Could not initialize configuration with preset.");
+      return 1;
+    }
+  }
+
+  if (options.Has("method")) {
+    option_value = options.Get("method");
+    if (!option_value.IsNumber()) {
+      error = Napi::TypeError::New(env, "Wrong type for option 'method'.");
+      return 1;
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 6) {
+      error = Napi::Error::New(
+          env, "Value for option 'method' must be between 0 and 6.");
+      return 1;
+    }
+
+    config.method = num;
+    use_lossless_preset = 0;  // disable -z option
+  }
+
+  if (options.Has("losslessPreset")) {
+    option_value = options.Get("losslessPreset");
+    if (!option_value.IsNumber()) {
+      error =
+          Napi::TypeError::New(env, "Wrong type for option 'losslessPreset'.");
+    }
+    int num = option_value.As<Napi::Number>().Int32Value();
+    if (num < 0 || num > 9) {
+      error = Napi::Error::New(
+          env, "Value for option 'losslessPreset' must be between 0 and 9.");
+    }
+
+    lossless_preset = num;
+    if (use_lossless_preset != 0) use_lossless_preset = 1;
   }
 
   if (options.Has("hint")) {
@@ -204,6 +291,19 @@ int parseOptions(const Napi::Object& options, WebPConfig& config, Napi::Env env,
     config.target_size = num;
   }
 
+  if (use_lossless_preset == 1) {
+    if (!WebPConfigLosslessPreset(&config, lossless_preset)) {
+      error = Napi::Error::New(env, "invalid losslessPreset");
+      return 1;
+    }
+  }
+
+  // If a target size was given, but somehow the pass option was
+  // omitted, force a reasonable value.
+  if (config.target_size > 0) {
+    if (config.pass == 1) config.pass = 6;
+  }
+
   return 0;
 }
 
@@ -215,8 +315,6 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
   int error = 0;
   int ok = 0;
   int keep_alpha = 1;
-  int lossless_preset = 6;
-  int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
 
   Metadata metadata;
   WebPPicture picture;
@@ -241,87 +339,6 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
     }
     Napi::Object options = info[1].ToObject();
 
-    if (options.Has("quality")) {
-      option_value = options.Get("quality");
-      if (!option_value.IsNumber()) {
-        NAPI_THROW_EMPTY_BUFFER(
-            Napi::TypeError::New(env, "Wrong type for option 'quality'."));
-      }
-      int num = option_value.As<Napi::Number>()
-                    .Int32Value();  // @todo should this be a float?
-      if (num < 0 || num > 100) {
-        Napi::Error::New(
-            env, "Value for option 'quality' must be between 0 and 100.");
-      }
-
-      config.quality = num;
-      use_lossless_preset = 0;  // disable -z option
-    }
-
-    if (options.Has("preset")) {
-      option_value = options.Get("preset");
-      if (!option_value.IsString()) {
-        NAPI_THROW_EMPTY_BUFFER(
-            Napi::TypeError::New(env, "Wrong type for option 'preset'."));
-      }
-      std::string presetName = option_value.As<Napi::String>();
-      WebPPreset preset;
-
-      if (presetName.compare("default") == 0) {
-        preset = WEBP_PRESET_DEFAULT;
-      } else if (presetName.compare("photo") == 0) {
-        preset = WEBP_PRESET_PHOTO;
-      } else if (presetName.compare("picture") == 0) {
-        preset = WEBP_PRESET_PICTURE;
-      } else if (presetName.compare("drawing") == 0) {
-        preset = WEBP_PRESET_DRAWING;
-      } else if (presetName.compare("icon") == 0) {
-        preset = WEBP_PRESET_ICON;
-      } else if (presetName.compare("text") == 0) {
-        preset = WEBP_PRESET_TEXT;
-      } else {
-        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(
-            env, "Value for option 'preset' must be a valid preset."));
-      }
-
-      if (!WebPConfigPreset(&config, preset, config.quality)) {
-        NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(
-            env, "Could not initialize configuration with preset."));
-      }
-    }
-
-    if (options.Has("method")) {
-      option_value = options.Get("method");
-      if (!option_value.IsNumber()) {
-        NAPI_THROW_EMPTY_BUFFER(
-            Napi::TypeError::New(env, "Wrong type for option 'method'."));
-      }
-      int num = option_value.As<Napi::Number>().Int32Value();
-      if (num < 0 || num > 6) {
-        Napi::Error::New(env,
-                         "Value for option 'method' must be between 0 and 6.");
-      }
-
-      config.method = num;
-      use_lossless_preset = 0;  // disable -z option
-    }
-
-    if (options.Has("losslessPreset")) {
-      option_value = options.Get("losslessPreset");
-      if (!option_value.IsNumber()) {
-        NAPI_THROW_EMPTY_BUFFER(Napi::TypeError::New(
-            env, "Wrong type for option 'losslessPreset'."));
-      }
-      int num = option_value.As<Napi::Number>().Int32Value();
-      if (num < 0 || num > 9) {
-        Napi::Error::New(
-            env, "Value for option 'losslessPreset' must be between 0 and 9.");
-      }
-
-      lossless_preset = num;
-      if (use_lossless_preset != 0) use_lossless_preset = 1;
-    }
-
     if (options.Has("noAlpha")) {
       option_value = options.Get("noAlpha");
       if (!option_value.IsBoolean()) {
@@ -337,18 +354,6 @@ Napi::Buffer<unsigned char> ConvertToWebpSync(const Napi::CallbackInfo& info) {
     if (error) {
       NAPI_THROW_EMPTY_BUFFER(errorValue);
     }
-  }
-
-  if (use_lossless_preset == 1) {
-    if (!WebPConfigLosslessPreset(&config, lossless_preset)) {
-      NAPI_THROW_EMPTY_BUFFER(Napi::Error::New(env, "invalid lossless preset"));
-    }
-  }
-
-  // If a target size was given, but somehow the pass option was
-  // omitted, force a reasonable value.
-  if (config.target_size > 0) {
-    if (config.pass == 1) config.pass = 6;
   }
 
   if (!WebPValidateConfig(&config)) {
