@@ -1,13 +1,97 @@
 {
   'targets': [
     {
+      'target_name': 'libtiff',
+      'type': 'static_library',
+      'sources': [
+        'src/libtiff/tif_aux.c',
+        'src/libtiff/tif_close.c',
+        'src/libtiff/tif_codec.c',
+        'src/libtiff/tif_color.c',
+        'src/libtiff/tif_compress.c',
+        'src/libtiff/tif_dir.c',
+        'src/libtiff/tif_dirinfo.c',
+        'src/libtiff/tif_dirread.c',
+        'src/libtiff/tif_dirwrite.c',
+        'src/libtiff/tif_dumpmode.c',
+        'src/libtiff/tif_error.c',
+        'src/libtiff/tif_extension.c',
+        'src/libtiff/tif_fax3.c',
+        'src/libtiff/tif_flush.c',
+        'src/libtiff/tif_getimage.c',
+        'src/libtiff/tif_hash_set.c',
+        'src/libtiff/tif_jbig.c',
+        'src/libtiff/tif_jpeg_12.c',
+        'src/libtiff/tif_jpeg.c',
+        'src/libtiff/tif_lerc.c',
+        'src/libtiff/tif_luv.c',
+        'src/libtiff/tif_lzma.c',
+        'src/libtiff/tif_lzw.c',
+        'src/libtiff/tif_next.c',
+        'src/libtiff/tif_ojpeg.c',
+        'src/libtiff/tif_open.c',
+        'src/libtiff/tif_packbits.c',
+        'src/libtiff/tif_pixarlog.c',
+        'src/libtiff/tif_predict.c',
+        'src/libtiff/tif_print.c',
+        'src/libtiff/tif_read.c',
+        'src/libtiff/tif_strip.c',
+        'src/libtiff/tif_swab.c',
+        'src/libtiff/tif_thunder.c',
+        'src/libtiff/tif_tile.c',
+        'src/libtiff/tif_unix.c',
+        'src/libtiff/tif_version.c',
+        'src/libtiff/tif_warning.c',
+        'src/libtiff/tif_webp.c',
+        'src/libtiff/tif_write.c',
+        'src/libtiff/tif_zip.c',
+        'src/libtiff/tif_zstd.c',
+      ],
+      'include_dirs': [
+        'conf',
+      ],
+      "direct_dependent_settings": {
+        "include_dirs": [
+          "conf",
+          'src/libtiff',
+        ]
+      },
+      'conditions': [
+        ['OS=="win"', {
+          'sources': [
+            'src/libtiff/tif_win32.c',
+          ],
+        }]
+      ],
+      'cflags': [
+        '-fno-exceptions',
+        '-std=c99',
+        '-O3',
+        '-flto',
+      ],
+      'xcode_settings': {
+        'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',
+        'CLANG_CXX_LIBRARY': 'libc++',
+        'MACOSX_DEPLOYMENT_TARGET': '10.7',
+        'OTHER_CFLAGS': [
+          '-fno-exceptions',
+          '-std=c99',
+          '-O3',
+          '-flto'
+        ],
+      },
+    },
+    {
       'target_name': 'webp',
+      "dependencies": [
+        "<!(node -p \"require('node-addon-api').gyp\")",
+        "libtiff"
+      ],
       'sources': [
         'src/libwebp/imageio/imageio_util.c',
         'src/libwebp/imageio/jpegdec.c',
         'src/libwebp/imageio/metadata.c',
         'src/libwebp/imageio/pngdec.c',
-        'src/libwebp/imageio/tiffdec.c',
 
         'src/libwebp/sharpyuv/sharpyuv.c',
         'src/libwebp/sharpyuv/sharpyuv_cpu.c',
@@ -97,6 +181,7 @@
         'src/libwebp/src/utils/thread_utils.c',
         'src/libwebp/src/utils/utils.c',
 
+        'src/image_reader_tiff.cc',
         'src/image_reader_webp.cc',
         'src/image_reader.cc',
         'src/image_writer.cc',
@@ -107,9 +192,6 @@
         'src/libwebp',
         'src/libwebp/src',
         "<!@(node -p \"require('node-addon-api').include\")"
-      ],
-      'dependencies': [
-        "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       'cflags': [
         '-fno-exceptions',

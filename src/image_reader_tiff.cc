@@ -9,22 +9,17 @@
 //
 // TIFF decode.
 
-#include "./tiffdec.h"
-
-#ifdef HAVE_CONFIG_H
-#include "webp/config.h"
-#endif
+#include "image_reader_tiff.h"
 
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WEBP_HAVE_TIFF
 #include <tiffio.h>
 
 #include "webp/encode.h"
-#include "./imageio_util.h"
-#include "./metadata.h"
+#include "imageio/imageio_util.h"
+#include "imageio/metadata.h"
 
 static const struct {
   ttag_t tag;
@@ -39,7 +34,7 @@ static const struct {
 // all cases.
 static int ExtractMetadataFromTIFF(TIFF* const tif, Metadata* const metadata) {
   int i;
-  toff_t exif_ifd_offset;
+//  toff_t exif_ifd_offset;
 
   for (i = 0; kTIFFMetadataMap[i].tag != 0; ++i) {
     MetadataPayload* const payload =
@@ -60,9 +55,9 @@ static int ExtractMetadataFromTIFF(TIFF* const tif, Metadata* const metadata) {
   // type, they are file based.
   // Exif 2.2 Section 4.6.2 Tag Structure
   // TIFF Revision 6.0 Part 1 Section 2 TIFF Structure #Image File Directory
-  if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &exif_ifd_offset)) {
-    fprintf(stderr, "Warning: EXIF extraction from TIFF is unsupported.\n");
-  }
+  // if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &exif_ifd_offset)) {
+    // Warning: EXIF extraction from TIFF is unsupported
+  // }
   return 1;
 }
 
@@ -275,19 +270,5 @@ int ReadTIFF(const uint8_t* const data, size_t data_size,
   TIFFClose(tif);
   return ok;
 }
-#else  // !WEBP_HAVE_TIFF
-int ReadTIFF(const uint8_t* const data, size_t data_size,
-             struct WebPPicture* const pic, int keep_alpha,
-             struct Metadata* const metadata) {
-  (void)data;
-  (void)data_size;
-  (void)pic;
-  (void)keep_alpha;
-  (void)metadata;
-  fprintf(stderr, "TIFF support not compiled. Please install the libtiff "
-          "development package before building.\n");
-  return 0;
-}
-#endif  // WEBP_HAVE_TIFF
 
 // -----------------------------------------------------------------------------
