@@ -15,8 +15,6 @@ export type Options = {
   lossless?: any
   nearLossless?: number
   pass: any
-  crop?: [number, number, number, number] // @todo unimplemented
-  resize?: [number, number] // @todo unimplemented
   metadata?: any // @todo unimplemented. Need to define how this is passed
 }
 
